@@ -11,7 +11,7 @@ starter 的详细步骤：
 <dependency>
     <groupId>com.asd.redis.orm</groupId>
     <artifactId>springboot-redis-orm-starter</artifactId>
-    <version>1.0.0</version>
+    <version>2.5.15</version>
 </dependency>
 ```
 
@@ -75,7 +75,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@RedisMapperScan(basePackages = "com.example.mapper")
+@RedisMapperScan(basePackages = "com.asd.redis.orm.mapper")
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
