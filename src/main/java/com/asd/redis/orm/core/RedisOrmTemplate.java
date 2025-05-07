@@ -451,4 +451,11 @@ public class RedisOrmTemplate {
 
         return true;
     }
+
+    /**
+     * 根据条件查询实体列表
+     */
+    public <T> List<T> list(Class<T> entityClass) {
+        return listAll(entityClass);
+    }
 }

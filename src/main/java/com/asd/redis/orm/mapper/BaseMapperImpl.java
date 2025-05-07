@@ -81,19 +81,33 @@ public class BaseMapperImpl<T> implements BaseMapper<T> {
     @Override
     public List<T> selectByCondition(T condition) {
         // 这里需要实现根据条件查询的逻辑
-        // 可以通过反射获取条件对象的非空字段作为查询条件
+        if (condition == null) {
+            // 如果条件为空，返回所有记录
+            return redisOrmTemplate.list(entityClass);
+        }
+        // 通过反射获取条件对象的非空字段作为查询条件
         return redisOrmTemplate.listByCondition(entityClass, condition);
     }
 
     @Override
     public Page<T> selectPageByCondition(T condition, long current, long size) {
         // 实现根据条件的分页查询
+        if (condition == null) {
+            // 如果条件为空，返回普通分页结果
+            return redisOrmTemplate.page(entityClass, current, size);
+        }
+        // 使用条件进行分页查询
         return redisOrmTemplate.pageByCondition(entityClass, condition, current, size);
     }
 
     @Override
     public long selectCountByCondition(T condition) {
         // 实现根据条件的计数查询
+        if (condition == null) {
+            // 如果条件为空，返回总记录数
+            return redisOrmTemplate.count(entityClass);
+        }
+        // 使用条件进行计数查询
         return redisOrmTemplate.countByCondition(entityClass, condition);
     }
 }
