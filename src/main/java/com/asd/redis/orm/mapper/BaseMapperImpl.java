@@ -90,6 +90,15 @@ public class BaseMapperImpl<T> implements BaseMapper<T> {
     }
 
     @Override
+    public List<T> selectByCondition(T condition, String orderBy, boolean isAsc) {
+        List<T> list = selectByCondition(condition);
+        if (orderBy != null && !orderBy.isEmpty()) {
+            return redisOrmTemplate.sort(list, orderBy, isAsc);
+        }
+        return list;
+    }
+
+    @Override
     public Page<T> selectPageByCondition(T condition, long current, long size) {
         // 实现根据条件的分页查询
         if (condition == null) {
@@ -98,6 +107,16 @@ public class BaseMapperImpl<T> implements BaseMapper<T> {
         }
         // 使用条件进行分页查询
         return redisOrmTemplate.pageByCondition(entityClass, condition, current, size);
+    }
+
+    @Override
+    public Page<T> selectPageByCondition(T condition, long current, long size, String orderBy, boolean isAsc) {
+        if (condition == null) {
+            // 如果条件为空，返回带排序的分页结果
+            return redisOrmTemplate.page(entityClass, current, size, orderBy, isAsc);
+        }
+        // 使用条件进行分页查询，并添加排序
+        return redisOrmTemplate.pageByCondition(entityClass, condition, current, size, orderBy, isAsc);
     }
 
     @Override

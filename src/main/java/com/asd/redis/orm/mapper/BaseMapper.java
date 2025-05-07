@@ -115,4 +115,26 @@ public interface BaseMapper<T> {
      * @return 总数
      */
     long selectCountByCondition(T condition);
+
+    /**
+     * 根据条件查询并排序
+     *
+     * @param condition 查询条件
+     * @param orderBy   排序字段
+     * @param isAsc     是否升序
+     * @return 排序后的结果列表
+     */
+    List<T> selectByCondition(T condition, String orderBy, boolean isAsc);
+
+    /**
+     * 根据条件分页查询并排序
+     *
+     * @param condition 查询条件
+     * @param current   当前页
+     * @param size      每页大小
+     * @param orderBy   排序字段
+     * @param isAsc     是否升序
+     * @return 分页结果
+     */
+    Page<T> selectPageByCondition(T condition, long current, long size, String orderBy, boolean isAsc);
 }

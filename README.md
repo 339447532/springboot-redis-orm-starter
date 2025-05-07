@@ -135,15 +135,35 @@ public class UserService {
         return redisOrmTemplate.removeById(User.class, id);
     }
 
-    // 分页查询
-    public model.com.asd.redis.orm.Page<User> getUserPage(long current, long size) {
-        return redisOrmTemplate.page(User.class, current, size);
-    }
+   // 分页查询
+   public model.com.asd.redis.orm.Page<User> getUserPage(long current, long size) {
+      return redisOrmTemplate.page(User.class, current, size);
+   }
 
-    // 计数
-    public long countUsers() {
-        return redisOrmTemplate.count(User.class);
-    }
+   // 计数
+   public long countUsers() {
+      return redisOrmTemplate.count(User.class);
+   }
+
+   // 根据条件查询用户（带排序）
+   public List<User> getUsersByCondition(User condition, String orderBy, boolean isAsc) {
+      if (condition == null) {
+         List<User> users = redisOrmTemplate.list(User.class);
+         return redisOrmTemplate.sort(users, orderBy, isAsc);
+      }
+      return redisOrmTemplate.listByCondition(User.class, condition, orderBy, isAsc);
+   }
+
+   // 分页查询（带排序）
+   public Page<User> getUserPage(long current, long size, String orderBy, boolean isAsc) {
+      return redisOrmTemplate.page(User.class, current, size, orderBy, isAsc);
+   }
+
+   // 条件分页查询（带排序）
+   public Page<User> getUserPageByCondition(User condition, long current, long size, String orderBy, boolean isAsc) {
+      return redisOrmTemplate.pageByCondition(User.class, condition, current, size, orderBy, isAsc);
+   }
+
 }
 ``` 
 
@@ -154,26 +174,59 @@ public class UserService {
     - @RedisEntity ：标记类为 Redis 实体，可设置键前缀和过期时间
     - @RedisId ：标记字段为实体 ID，支持 UUID、自动递增和手动输入三种方式 如：@RedisId(type = RedisId.IdType.AUTO)自动生成ID
     - @RedisField ：标记字段为实体属性，可设置是否忽略 @RedisField(ignore = true)
+
 2. 核心操作 ：
 
-    - 保存实体： save(entity)
-    - 批量保存： saveBatch(entities)
-    - 根据 ID 查询： getById(entityClass, id)
-    - 批量查询： listByIds(entityClass, ids)
-    - 更新实体： updateById(entity)
-    - 批量更新： updateBatchById(entities)
-    - 删除实体： removeById(entityClass, id)
-    - 批量删除： removeByIds(entityClass, ids)
-    - 分页查询： page(entityClass, current, size)
-    - 计数： count(entityClass)
-    - 条件对象查询列表:  selectByCondition(entity)
-    - 条件对象查询分页:  selectPageByCondition(entity, current, size)
-    - 条件对象查询总记录数:  selectCountByCondition(entity)
+   - 保存实体： save(entity)
+   - 批量保存： saveBatch(entities)
+   - 根据 ID 查询： getById(entityClass, id)
+   - 批量查询： listByIds(entityClass, ids)
+   - 更新实体： updateById(entity)
+   - 批量更新： updateBatchById(entities)
+   - 删除实体： removeById(entityClass, id)
+   - 批量删除： removeByIds(entityClass, ids)
+   - 分页查询： page(entityClass, current, size)
+   - 计数： count(entityClass)
+   - 条件对象查询列表： selectByCondition(entity)
+   - 条件对象查询列表（带排序）： selectByCondition(entity, orderBy, isAsc)
+   - 条件对象查询分页： selectPageByCondition(entity, current, size)
+   - 条件对象查询分页（带排序）： selectPageByCondition(entity, current, size, orderBy, isAsc)
+   - 条件对象查询总记录数： selectCountByCondition(entity)
+
 3. 配置选项 ：
 
-    - redis.orm.key-prefix ：键前缀
-    - redis.orm.default-expire-time ：默认过期时间
-    - redis.orm.enable-cache ：是否启用缓存
-    - redis.orm.cache-size ：缓存大小
-      这个 starter 提供了类似于 MyBatis-Plus 的操作体验，但是针对 Redis 数据库，使得在 Spring Boot 项目中使用 Redis
-      进行对象存储变得简单高效。
+   - redis.orm.key-prefix ：键前缀
+   - redis.orm.default-expire-time ：默认过期时间
+   - redis.orm.enable-cache ：是否启用缓存
+   - redis.orm.cache-size ：缓存大小
+
+4. 排序功能：
+
+   - 支持对查询结果进行排序
+   - 可以指定任意字段作为排序字段
+   - 支持升序（ASC）和降序（DESC）排序
+   - 排序示例：
+     ```java
+     // 按年龄升序查询用户
+     List<User> users = userMapper.selectByCondition(null, "age", true);
+     
+     // 按姓名升序查询用户，再按年龄降序排序
+     List<User> users = userMapper.selectByCondition(null, "name", true);
+     users = userMapper.sort(users, "age", false);
+     
+     // 按用户名升序查询匹配条件的用户
+     User condition = new User();
+     condition.setStatus("active");
+     List<User> activeUsers = getUsersByCondition(condition, "username", true);
+    
+     // 按最后登录时间降序分页查询匹配条件的用户
+   Page<User> activePage = getUserPageByCondition(condition, 1, 10, "lastLoginTime", false);
+     ```
+   - 排序特性：
+     - 支持所有可比较类型（实现了Comparable接口的类型）
+     - 对于不可比较的类型，使用toString()结果进行比较
+     - 空值处理（null值会根据排序方向被放置在最前或最后）
+     - 支持与分页查询结合使用
+
+这个 starter 提供了类似于 MyBatis-Plus 的操作体验，但是针对 Redis 数据库，使得在 Spring Boot 项目中使用 Redis
+进行对象存储变得简单高效。新增的排序功能让数据查询更加灵活，能够满足更多的业务场景需求。

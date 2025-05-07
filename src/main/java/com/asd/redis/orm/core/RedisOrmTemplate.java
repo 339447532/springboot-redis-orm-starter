@@ -458,4 +458,113 @@ public class RedisOrmTemplate {
     public <T> List<T> list(Class<T> entityClass) {
         return listAll(entityClass);
     }
+
+    /**
+     * 对列表进行排序
+     *
+     * @param list    待排序列表
+     * @param orderBy 排序字段
+     * @param isAsc   是否升序
+     * @return 排序后的列表
+     */
+    public <T> List<T> sort(List<T> list, String orderBy, boolean isAsc) {
+        if (list == null || list.isEmpty() || orderBy == null || orderBy.isEmpty()) {
+            return list;
+        }
+
+        list.sort((a, b) -> {
+            try {
+                Object valueA = ReflectionUtils.getFieldValue(a, orderBy);
+                Object valueB = ReflectionUtils.getFieldValue(b, orderBy);
+
+                if (valueA == null && valueB == null) {
+                    return 0;
+                }
+                if (valueA == null) {
+                    return isAsc ? -1 : 1;
+                }
+                if (valueB == null) {
+                    return isAsc ? 1 : -1;
+                }
+
+                if (valueA instanceof Comparable && valueB instanceof Comparable) {
+                    int result = ((Comparable) valueA).compareTo(valueB);
+                    return isAsc ? result : -result;
+                }
+
+                // 如果不是Comparable类型，则比较toString()结果
+                int result = valueA.toString().compareTo(valueB.toString());
+                return isAsc ? result : -result;
+            } catch (Exception e) {
+                log.error("Sort failed for field: {}", orderBy, e);
+                return 0;
+            }
+        });
+
+        return list;
+    }
+
+    /**
+     * 分页查询（带排序）
+     */
+    public <T> Page<T> page(Class<T> entityClass, long current, long size, String orderBy, boolean isAsc) {
+        List<T> list = listAll(entityClass);
+        if (orderBy != null && !orderBy.isEmpty()) {
+            list = sort(list, orderBy, isAsc);
+        }
+
+        long total = list.size();
+        long pages = (total + size - 1) / size;
+
+        if (current > pages && pages > 0) {
+            current = pages;
+        }
+
+        long start = (current - 1) * size;
+        long end = Math.min(start + size, total);
+
+        List<T> records = new ArrayList<>();
+        if (start < total) {
+            records = list.subList((int) start, (int) end);
+        }
+
+        Page<T> page = new Page<>(current, size);
+        page.setTotal(total);
+        page.setPages(pages);
+        page.setRecords(records);
+
+        return page;
+    }
+
+    /**
+     * 根据条件分页查询（带排序）
+     */
+    public <T> Page<T> pageByCondition(Class<T> entityClass, T condition, long current, long size, String orderBy, boolean isAsc) {
+        List<T> list = listByCondition(entityClass, condition);
+        if (orderBy != null && !orderBy.isEmpty()) {
+            list = sort(list, orderBy, isAsc);
+        }
+
+        long total = list.size();
+        long pages = (total + size - 1) / size;
+
+        if (current > pages && pages > 0) {
+            current = pages;
+        }
+
+        long start = (current - 1) * size;
+        long end = Math.min(start + size, total);
+
+        List<T> records = new ArrayList<>();
+        if (start < total) {
+            records = list.subList((int) start, (int) end);
+        }
+
+        Page<T> page = new Page<>(current, size);
+        page.setTotal(total);
+        page.setPages(pages);
+        page.setRecords(records);
+
+        return page;
+    }
 }
